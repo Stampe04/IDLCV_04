@@ -223,3 +223,4 @@ __marimo__/
 *.out
 *.pth
 *.csv
+*.gz
