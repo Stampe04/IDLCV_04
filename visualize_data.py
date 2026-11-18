@@ -13,27 +13,31 @@ DATASET = Path("/dtu/datasets1/02516/potholes")
 OUTPUT = Path(__file__).resolve().parent / "visualizations"
 OUTPUT.mkdir(parents=True, exist_ok=True)
 
-# Images to inspect
+# Choose 6 examples
+# You can change these later if you find better-looking report examples
 EXAMPLES = [
     "potholes0",
     "potholes58",
-    "potholes214",
     "potholes100",
+    "potholes214",
+    "potholes231",
+    "potholes277",
 ]
 
-fig, axes = plt.subplots(2, 2, figsize=(12, 9))
+# 3 rows x 2 columns
+fig, axes = plt.subplots(3, 2, figsize=(8, 12))
+axes = axes.flatten()
 
-for ax, name in zip(axes.flat, EXAMPLES):
+for ax, name in zip(axes, EXAMPLES):
     image_path = DATASET / "images" / f"{name}.png"
     annotation_path = DATASET / "annotations" / f"{name}.xml"
 
-    # Read original image and annotations
-    image = Image.open(image_path)
+    # Load original image
+    image = Image.open(image_path).convert("RGB")
     root = ET.parse(annotation_path).getroot()
 
     ax.imshow(image)
 
-    # Display all original bounding boxes
     objects = root.findall("object")
 
     for obj in objects:
@@ -44,25 +48,24 @@ for ax, name in zip(axes.flat, EXAMPLES):
         xmax = int(box.findtext("xmax"))
         ymax = int(box.findtext("ymax"))
 
-        rectangle = Rectangle(
+        # Draw annotation exactly as given
+        rect = Rectangle(
             (xmin, ymin),
             xmax - xmin,
             ymax - ymin,
-            linewidth=1.5,
+            linewidth=1.2,
             edgecolor="red",
             facecolor="none"
         )
+        ax.add_patch(rect)
 
-        ax.add_patch(rectangle)
-
-    ax.set_title(f"{name} ({len(objects)} annotations)")
+    ax.set_title(f"{name} ({len(objects)} potholes)", fontsize=10)
     ax.axis("off")
 
 plt.tight_layout()
 
-# Save visualization only
-save_path = OUTPUT / "ground_truth_examples.png"
-plt.savefig(save_path, dpi=150, bbox_inches="tight")
+save_path = OUTPUT / "ground_truth_examples_6.png"
+plt.savefig(save_path, dpi=200, bbox_inches="tight")
 plt.close()
 
 print(f"Visualization saved to: {save_path}")
