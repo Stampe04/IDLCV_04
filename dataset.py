@@ -50,8 +50,11 @@ class potholes(torch.utils.data.Dataset):
         annotation = read_content(annotation_file)
 
         filename, boxes = annotation
-        
-        X = self.transform(image)
+
+        if self.transform:
+            X = self.transform(image)
+        else:
+            X = image
         Y = boxes
 
         return X, Y
