@@ -60,9 +60,7 @@ class potholes(torch.utils.data.Dataset):
         return X, Y
 
 if __name__ == "__main__":
-    size = 128
-    train_transform = transforms.Compose([transforms.Resize((size, size)),
-                                    transforms.ToTensor()])
+    train_transform = transforms.Compose(transforms.ToTensor())
     potholes_dataset = potholes(transform=train_transform)
     print(f"Loaded {len(potholes_dataset)} images")
     print(f"First sample: {potholes_dataset[0]}")

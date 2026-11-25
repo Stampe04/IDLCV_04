@@ -20,7 +20,8 @@ def edge_boxes(img_bgr, top_n_props=200, alpha=0.65, beta=0.75):
     boxes = np.stack([boxes[:, 0], boxes[:, 1],
                       boxes[:, 0] + boxes[:, 2], boxes[:, 1] + boxes[:, 3]], 1)
     scores = np.asarray(scores, dtype=np.float32).ravel()
-    return boxes, scores
+    order = np.argsort(-scores)
+    return boxes[order][:top_n_props]
 
 def selective_search(img_bgr, top_n_props=200):
     ss = cv2.ximgproc.segmentation.createSelectiveSearchSegmentation()
