@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
 import glob
-from dataset import read_content
+from dataset import *
+from sklearn.model_selection import train_test_split
+import torchvision.transforms as transforms
 
 sed = cv2.ximgproc.createStructuredEdgeDetection("model.yml.gz")
 
@@ -16,7 +18,9 @@ def edge_boxes(img_bgr, top_n_props=200, alpha=0.65, beta=0.75):
     eb.setMaxBoxes(top_n_props)
     eb.setAlpha(alpha)
     eb.setBeta(beta)
-    boxes, scores = eb.getBoundingBoxes(edges, orient) 
+    boxes, scores = eb.getBoundingBoxes(edges, orient)
+    if len(boxes) == 0:
+        return np.zeros((0, 4), dtype=np.float32)
 
     boxes = np.asarray(boxes, dtype=np.float32)
     boxes = np.stack([boxes[:, 0], boxes[:, 1],
@@ -31,6 +35,8 @@ def selective_search(img_bgr, top_n_props=200):
     ss.switchToSelectiveSearchFast()
 
     rects = ss.process()
+    if len(rects) == 0:
+        return np.zeros((0, 4), dtype=np.float32)
 
     boxes = np.asarray(rects, dtype=np.float32)
     boxes = np.stack([boxes[:, 0], boxes[:, 1],
@@ -47,28 +53,38 @@ def iou(gt, props):
     b = (props[..., 2] - props[..., 0]) * (props[..., 3] - props[..., 1])
     return inter / (a + b - inter)
 
-Ns = [10, 25, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000]
+Ns = [10, 25, 50, 100, 200, 500, 750, 1000, 1250]
 thr = 0.55
 root = "/dtu/datasets1/02516/potholes"
-img_paths = sorted(glob.glob(root + "/images/*.png"))
-xml_paths = sorted(glob.glob(root + "/annotations/*.xml"))
+potholes_dataset = potholes(transform=None)
+train_imgs, test_imgs, train_xmls, test_xmls = train_test_split(potholes_dataset.images_path, potholes_dataset.annotations_path, test_size=0.1, random_state=42)
 
 hits_edge = {n: 0 for n in Ns}
 hits_ss = {n: 0 for n in Ns}
 total = 0
 
-for ip, xp in zip(img_paths[:100], xml_paths[:100]):
+for ip, xp in zip(train_imgs, train_xmls):
     img = cv2.imread(ip)
     filename, gt = read_content(xp)
-    gt = np.array(gt, dtype=np.float32)
+    gt = np.array(gt, dtype=np.float32).reshape(-1, 4)
+
+    if len(gt) == 0:
+        print("Nincs GT box:", ip)
+        continue
+
     total += len(gt)
 
-    e = edge_boxes(img, 1000)
-    s = selective_search(img, 1000)
+    e = edge_boxes(img, 2000)
+    s = selective_search(img, 2000)
+
+    if len(e) == 0:
+        print("Üres EdgeBoxes:", ip)
 
     for n in Ns:
-        hits_edge[n] += (iou(gt, e[:n]).max(axis=1) >= thr).sum()
-        hits_ss[n] += (iou(gt, s[:n]).max(axis=1) >= thr).sum()
+        if len(e) > 0:
+            hits_edge[n] += (iou(gt, e[:n]).max(axis=1) >= thr).sum()
+        if len(s) > 0:
+            hits_ss[n] += (iou(gt, s[:n]).max(axis=1) >= thr).sum()
 
 for n in Ns:
     print(n, "EdgeBoxes:", hits_edge[n] / total, "SelSearch:", hits_ss[n] / total)

@@ -4,6 +4,7 @@ import os
 import glob
 import xml.etree.ElementTree as ET
 from PIL import Image
+from sklearn.model_selection import train_test_split
 
 def read_content(xml_file: str):
 
@@ -62,5 +63,6 @@ class potholes(torch.utils.data.Dataset):
 if __name__ == "__main__":
     train_transform = transforms.Compose(transforms.ToTensor())
     potholes_dataset = potholes(transform=train_transform)
+    train_imgs, test_imgs, train_xmls, test_xmls = train_test_split(potholes_dataset.images_path, potholes_dataset.annotations_path, test_size=0.1, random_state=42)
     print(f"Loaded {len(potholes_dataset)} images")
     print(f"First sample: {potholes_dataset[0]}")
