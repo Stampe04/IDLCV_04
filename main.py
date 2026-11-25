@@ -10,9 +10,7 @@ img_path = "/dtu/datasets1/02516/potholes"
 xml_path = "/dtu/datasets1/02516/potholes"
 
 rp = RegionProposals(
-    top_n_props=850,
-    alpha=0.65,
-    beta=0.75
+    top_n_props=750
 )
 
 labeler = RegionProposalLabeler(iou_threshold=0.5)
