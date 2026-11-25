@@ -47,7 +47,7 @@ def iou(gt, props):
     b = (props[..., 2] - props[..., 0]) * (props[..., 3] - props[..., 1])
     return inter / (a + b - inter)
 
-Ns = [10, 25, 50, 100, 200, 500, 1000]
+Ns = [10, 25, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000]
 thr = 0.55
 root = "/dtu/datasets1/02516/potholes"
 img_paths = sorted(glob.glob(root + "/images/*.png"))
