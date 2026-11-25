@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import glob
+from dataset import read_content
 
 sed = cv2.ximgproc.createStructuredEdgeDetection("model.yml.gz")
 
@@ -35,6 +37,38 @@ def selective_search(img_bgr, top_n_props=200):
                       boxes[:, 0] + boxes[:, 2], boxes[:, 1] + boxes[:, 3]], 1)
     return boxes[:top_n_props]
 
-img = cv2.imread("/dtu/datasets1/02516/potholes/images/potholes1.png")
-props = edge_boxes(img, top_n_props=200)
-props_2 = selective_search(img, top_n_props=200)
+def iou(gt, props):
+    gt = gt[:, None]
+    props =  props[None]
+    iw = np.clip(np.minimum(gt[..., 2], props[..., 2]) - np.maximum(gt[..., 0], props[..., 0]), 0, None)
+    ih = np.clip(np.minimum(gt[..., 3], props[..., 3]) - np.maximum(gt[..., 1], props[..., 1]), 0, None)
+    inter = iw * ih
+    a = (gt[..., 2] - gt[..., 0]) * (gt[..., 3] - gt[..., 1])
+    b = (props[..., 2] - props[..., 0]) * (props[..., 3] - props[..., 1])
+    return inter / (a + b - inter)
+
+Ns = [10, 25, 50, 100, 200, 500, 1000]
+thr = 0.55
+root = "/dtu/datasets1/02516/potholes"
+img_paths = sorted(glob.glob(root + "/images/*.png"))
+xml_paths = sorted(glob.glob(root + "/annotations/*.xml"))
+
+hits_edge = {n: 0 for n in Ns}
+hits_ss = {n: 0 for n in Ns}
+total = 0
+
+for ip, xp in zip(img_paths[:100], xml_paths[:100]):
+    img = cv2.imread(ip)
+    filename, gt = read_content(xp)
+    gt = np.array(gt, dtype=np.float32)
+    total += len(gt)
+
+    e = edge_boxes(img, 1000)
+    s = selective_search(img, 1000)
+
+    for n in Ns:
+        hits_edge[n] += (iou(gt, e[:n]).max(axis=1) >= thr).sum()
+        hits_ss[n] += (iou(gt, s[:n]).max(axis=1) >= thr).sum()
+
+for n in Ns:
+    print(n, "EdgeBoxes:", hits_edge[n] / total, "SelSearch:", hits_ss[n] / total)
