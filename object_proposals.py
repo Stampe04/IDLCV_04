@@ -36,5 +36,5 @@ def selective_search(img_bgr, top_n_props=200):
     return boxes[:top_n_props]
 
 img = cv2.imread("/dtu/datasets1/02516/potholes/images/potholes1.png")
-props, scores = edge_boxes(img, top_n_props=200)
+props = edge_boxes(img, top_n_props=200)
 props_2 = selective_search(img, top_n_props=200)
