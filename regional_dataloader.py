@@ -1,16 +1,12 @@
-
 from pathlib import Path
-
 import cv2
 import numpy as np
 import torch
-
 from PIL import Image
 from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from torchvision import transforms
-
-from datasets import potholes, read_content
-from region_proposal_labeler import RegionProposalLabeler
+from dataset import potholes, read_content
+from regional_proposal_labeler import RegionProposalLabeler
 
 
 # Configuration
