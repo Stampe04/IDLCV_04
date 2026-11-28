@@ -1,4 +1,3 @@
-
 from glob import glob
 import sys
 sys.path.append("/zhome/99/3/215784/Desktop/archive/IDLCV/IDLCV_04")
@@ -38,7 +37,6 @@ for img_path, xml_path in zip(img_paths, xml_paths):
 
     print(cropped_img.shape, labels[0])
     #save the cropped image to disk
-    cv2.imwrite("cropped_image.png", cropped_img)
     cv2.imwrite("Cropped Image.png", cropped_img)
 
     break
