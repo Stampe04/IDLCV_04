@@ -1,23 +1,44 @@
 import numpy as np
 
-def iou(box1, box2):
-    """
-    Compute IoU between two bounding boxes.
-    Format: [xmin, ymin, xmax, ymax]
-    """
-    x1 = max(box1[0], box2[0])
-    y1 = max(box1[1], box2[1])
-    x2 = min(box1[2], box2[2])
-    y2 = min(box1[3], box2[3])
+def iou(gt, props):
+        gt = np.asarray(gt, dtype=np.float32).reshape(-1, 4)
+        props = np.asarray(props, dtype=np.float32).reshape(-1, 4)
 
-    intersection = max(0, x2 - x1) * max(0, y2 - y1)
+        gt = gt[:, None]
+        props = props[None]
 
-    area1 = max(0, box1[2] - box1[0]) * max(0, box1[3] - box1[1])
-    area2 = max(0, box2[2] - box2[0]) * max(0, box2[3] - box2[1])
+        iw = np.clip(
+            np.minimum(gt[..., 2], props[..., 2])
+            - np.maximum(gt[..., 0], props[..., 0]),
+            0, None
+        )
 
-    union = area1 + area2 - intersection
+        ih = np.clip(
+            np.minimum(gt[..., 3], props[..., 3])
+            - np.maximum(gt[..., 1], props[..., 1]),
+            0, None
+        )
 
-    return intersection / union if union > 0 else 0.0
+        inter = iw * ih
+
+        a = (
+            (gt[..., 2] - gt[..., 0])
+            * (gt[..., 3] - gt[..., 1])
+        )
+
+        b = (
+            (props[..., 2] - props[..., 0])
+            * (props[..., 3] - props[..., 1])
+        )
+
+        union = a + b - inter
+
+        return np.divide(
+            inter,
+            union,
+            out=np.zeros_like(inter),
+            where=union > 0
+        )
 
 def average_precision(predictions, ground_truth, iou_threshold=0.5):
     """
@@ -72,7 +93,7 @@ def average_precision(predictions, ground_truth, iou_threshold=0.5):
             fp[i] = 1
             continue
 
-        overlaps = [iou(pred_box, gt) for gt in gt_boxes]
+        overlaps = [iou(gt, pred_box) for gt in gt_boxes]
 
         best_idx = int(np.argmax(overlaps))
         best_iou = overlaps[best_idx]

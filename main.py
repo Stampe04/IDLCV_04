@@ -1,7 +1,4 @@
 from glob import glob
-import sys
-sys.path.append("/zhome/99/3/215784/Desktop/archive/IDLCV/IDLCV_04")
-
 from regional_proposal_labeler import RegionProposalLabeler
 from regional_proposals import RegionProposals
 from dataset import potholes, read_content
